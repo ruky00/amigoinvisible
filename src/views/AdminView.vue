@@ -1,37 +1,22 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { api, ApiError, usingMock } from '@/api'
-import { resetMockDb } from '@/api/mock'
+// Panel de UN sorteo: participantes, exclusiones, enlaces, datos y el propio sorteo.
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { api, ApiError } from '@/api'
 import { useSessionStore } from '@/stores/session'
 import type { AdminParticipant, AdminState } from '@/types'
-import HangingBauble from '@/components/HangingBauble.vue'
+import AdminLogin from '@/components/AdminLogin.vue'
 import RibbonBow from '@/components/RibbonBow.vue'
 
 const session = useSessionStore()
+const route = useRoute()
+const router = useRouter()
+const eventId = computed(() => String(route.params.eventId))
 
 const state = ref<AdminState | null>(null)
 const loading = ref(false)
 const busy = ref(false)
 const error = ref('')
-
-// --- Login ---
-const password = ref('')
-const loginError = ref('')
-
-async function login() {
-  loginError.value = ''
-  busy.value = true
-  try {
-    const { token } = await api.loginAdmin(password.value)
-    session.adminToken = token
-    password.value = ''
-    await load()
-  } catch (e) {
-    loginError.value = e instanceof ApiError ? e.message : 'No se ha podido entrar.'
-  } finally {
-    busy.value = false
-  }
-}
 
 function logout() {
   session.adminToken = null
@@ -43,9 +28,10 @@ const token = () => session.adminToken ?? ''
 async function load() {
   loading.value = true
   try {
-    setState(await api.getAdminState(token()))
+    setState(await api.getAdminState(token(), eventId.value))
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) return logout()
+    if (e instanceof ApiError && e.status === 404) return router.replace({ name: 'admin' })
     error.value = e instanceof ApiError ? e.message : 'No se han podido cargar los datos.'
   } finally {
     loading.value = false
@@ -53,6 +39,13 @@ async function load() {
 }
 
 onMounted(() => {
+  if (session.adminToken) load()
+})
+
+// al saltar de un sorteo a otro sin salir de esta pantalla
+watch(eventId, () => {
+  state.value = null
+  error.value = ''
   if (session.adminToken) load()
 })
 
@@ -84,7 +77,7 @@ function setState(s: AdminState) {
 }
 
 async function saveEvent() {
-  if (await run(() => api.updateEvent(token(), { ...eventForm }))) {
+  if (await run(() => api.updateEvent(token(), eventId.value, { ...eventForm }))) {
     eventSaved.value = true
     setTimeout(() => (eventSaved.value = false), 2000)
   }
@@ -97,19 +90,19 @@ const copied = ref<string | null>(null)
 
 async function addPerson() {
   if (!newName.value.trim()) return
-  if (await run(() => api.addParticipant(token(), newName.value))) newName.value = ''
+  if (await run(() => api.addParticipant(token(), eventId.value, newName.value))) newName.value = ''
 }
 
 async function removePerson(p: AdminParticipant) {
   if (!confirm(`¿Quitar a ${p.name} del sorteo?`)) return
-  await run(() => api.removeParticipant(token(), p.id))
+  await run(() => api.removeParticipant(token(), eventId.value, p.id))
 }
 
 async function toggleExclusion(p: AdminParticipant, otherId: string) {
   const exclusions = p.exclusions.includes(otherId)
     ? p.exclusions.filter((x) => x !== otherId)
     : [...p.exclusions, otherId]
-  await run(() => api.updateParticipant(token(), p.id, { exclusions }))
+  await run(() => api.updateParticipant(token(), eventId.value, p.id, { exclusions }))
 }
 
 function linkFor(p: AdminParticipant) {
@@ -117,7 +110,7 @@ function linkFor(p: AdminParticipant) {
 }
 
 function whatsappFor(p: AdminParticipant) {
-  const text = `¡Hola ${p.name}! Ya está montado el amigo invisible 🎁\nEntra aquí para ver a quién te toca y escribir tu lista: ${linkFor(p)}\n(Tu código es ${p.code})`
+  const text = `¡Hola ${p.name}! Ya está montado el amigo invisible «${state.value?.event.name ?? ''}» 🎁\nEntra aquí para ver a quién te toca y escribir tu lista: ${linkFor(p)}\n(Tu código es ${p.code})`
   return `https://wa.me/?text=${encodeURIComponent(text)}`
 }
 
@@ -144,7 +137,7 @@ const drawing = ref(false)
 
 async function doDraw() {
   drawing.value = true
-  await run(() => api.runDraw(token()))
+  await run(() => api.runDraw(token(), eventId.value))
   drawing.value = false
 }
 
@@ -152,7 +145,7 @@ async function redoDraw() {
   const ok = confirm(
     'Se anulará el sorteo actual y podrás volver a hacerlo (y añadir o quitar gente). Las listas de deseos se mantienen. ¿Seguro?',
   )
-  if (ok) await run(() => api.resetDraw(token()))
+  if (ok) await run(() => api.resetDraw(token(), eventId.value))
 }
 
 function drawnAtText() {
@@ -161,36 +154,38 @@ function drawnAtText() {
   return new Date(at).toLocaleString('es-ES', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
 }
 
-function resetDemo() {
-  if (!confirm('Esto borra los datos de prueba de este navegador. ¿Seguro?')) return
-  resetMockDb()
-  load()
+async function deleteThisEvent() {
+  const name = state.value?.event.name ?? 'este sorteo'
+  const ok = confirm(
+    `¿Borrar «${name}» para siempre? Se borran también sus participantes, sus listas de deseos y quién regala a quién. No se puede deshacer.`,
+  )
+  if (!ok) return
+  error.value = ''
+  busy.value = true
+  try {
+    await api.deleteEvent(token(), eventId.value)
+    router.replace({ name: 'admin' })
+  } catch (e) {
+    error.value = e instanceof ApiError ? e.message : 'No se ha podido borrar.'
+  } finally {
+    busy.value = false
+  }
 }
 </script>
 
 <template>
-  <!-- Acceso -->
-  <section v-if="!session.adminToken" class="login">
-    <form class="card stack" @submit.prevent="login">
-      <RibbonBow />
-      <HangingBauble :size="40" :sway="false" />
-      <h2>Zona de <em>organización</em></h2>
-      <p class="muted">Aquí se apunta a la familia y se mezclan los papelitos.</p>
-      <div>
-        <label for="pw">Contraseña</label>
-        <input id="pw" v-model="password" type="password" autocomplete="current-password" />
-      </div>
-      <p v-if="loginError" class="error" role="alert">{{ loginError }}</p>
-      <button class="btn btn-primary" :disabled="busy || !password">Entrar</button>
-    </form>
-  </section>
+  <AdminLogin v-if="!session.adminToken" @done="load" />
 
-  <p v-else-if="loading && !state" class="loading">Contando a la familia…</p>
+  <p v-else-if="!state && !error" class="loading">Contando cabezas…</p>
+
+  <p v-else-if="!state" class="banner error" role="alert">{{ error }}</p>
 
   <div v-else-if="state" class="admin">
+    <RouterLink :to="{ name: 'admin' }" class="back">← Todos mis sorteos</RouterLink>
+
     <header class="head">
       <div>
-        <p class="eyebrow">Organización</p>
+        <p class="eyebrow">Sorteo</p>
         <h1 class="silver">{{ state.event.name || 'Amigo invisible' }}</h1>
       </div>
       <button class="btn btn-ghost btn-sm" @click="logout">Salir</button>
@@ -203,7 +198,7 @@ function resetDemo() {
       <section class="card people">
         <RibbonBow />
         <div class="section-head">
-          <h2>La familia</h2>
+          <h2>Participantes</h2>
           <span class="muted count">{{ state.participants.length }} personas</span>
         </div>
 
@@ -286,7 +281,7 @@ function resetDemo() {
           <h2>El sorteo</h2>
           <template v-if="!drawDone">
             <p class="muted">
-              Cuando esté toda la familia apuntada, haz el sorteo. Nadie, ni siquiera tú, verá quién le
+              Cuando esté todo el mundo apuntado, haz el sorteo. Nadie, ni siquiera tú, verá quién le
               toca a quién: cada uno solo ve el suyo.
             </p>
             <button
@@ -336,35 +331,18 @@ function resetDemo() {
           </div>
         </form>
 
-        <p v-if="usingMock" class="demo muted small">
-          Estás en modo pruebas: los datos viven solo en este navegador.
-          <button class="btn-link" type="button" @click="resetDemo">Empezar de cero</button>
-        </p>
+        <section class="danger">
+          <p class="muted small">¿Ya no lo necesitas? Se borra con todo lo que tiene dentro.</p>
+          <button class="btn-link danger-link" type="button" :disabled="busy" @click="deleteThisEvent">
+            Borrar este sorteo
+          </button>
+        </section>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.login {
-  max-width: 430px;
-  margin: 1rem auto 0;
-}
-
-.login .card {
-  text-align: center;
-  padding-top: 2.4rem;
-}
-
-.login label,
-.login input {
-  text-align: left;
-}
-
-.login .btn {
-  width: 100%;
-}
-
 .loading {
   text-align: center;
   font-family: var(--font-display);
@@ -629,11 +607,6 @@ function resetDemo() {
 .saved {
   color: var(--ok);
   font-size: 0.92rem;
-}
-
-.demo {
-  text-align: center;
-  padding: 0 0.5rem;
 }
 
 @media (max-width: 820px) {

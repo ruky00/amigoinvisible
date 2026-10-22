@@ -2,7 +2,7 @@
 // Los endpoints están descritos en API.md. La URL base sale de VITE_API_URL
 // (vacía = mismo dominio, p. ej. Pages Functions en /api).
 
-import type { AdminState, Assignment, EventInfo, Me, Wish } from '@/types'
+import type { AdminState, Assignment, EventInfo, EventSummary, Me, Wish } from '@/types'
 import { ApiError, type Api } from './types'
 
 const BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
@@ -26,8 +26,11 @@ async function call<T>(method: string, path: string, token?: string, body?: unkn
     }
     throw new ApiError(message, res.status)
   }
+  if (res.status === 204) return undefined as T
   return (await res.json()) as T
 }
+
+const ev = (eventId: string) => `/admin/events/${encodeURIComponent(eventId)}`
 
 export const httpApi: Api = {
   loginWithCode: (code) => call('POST', '/login', undefined, { code }),
@@ -39,13 +42,18 @@ export const httpApi: Api = {
     call<{ wishes: Wish[] }>('PUT', '/me/wishlist', t, { wishes }).then((r) => r.wishes),
 
   loginAdmin: (password) => call('POST', '/admin/login', undefined, { password }),
-  getAdminState: (t) => call<AdminState>('GET', '/admin', t),
-  updateEvent: (t, data) => call<AdminState>('PATCH', '/admin/event', t, data),
-  addParticipant: (t, name) => call<AdminState>('POST', '/admin/participants', t, { name }),
-  updateParticipant: (t, id, data) =>
-    call<AdminState>('PATCH', `/admin/participants/${encodeURIComponent(id)}`, t, data),
-  removeParticipant: (t, id) =>
-    call<AdminState>('DELETE', `/admin/participants/${encodeURIComponent(id)}`, t),
-  runDraw: (t) => call<AdminState>('POST', '/admin/draw', t),
-  resetDraw: (t) => call<AdminState>('DELETE', '/admin/draw', t),
+  listEvents: (t) => call<{ events: EventSummary[] }>('GET', '/admin/events', t).then((r) => r.events),
+  createEvent: (t, data) => call<{ id: string }>('POST', '/admin/events', t, data),
+  deleteEvent: (t, eventId) => call<void>('DELETE', ev(eventId), t),
+
+  getAdminState: (t, eventId) => call<AdminState>('GET', ev(eventId), t),
+  updateEvent: (t, eventId, data) => call<AdminState>('PATCH', ev(eventId), t, data),
+  addParticipant: (t, eventId, name) =>
+    call<AdminState>('POST', `${ev(eventId)}/participants`, t, { name }),
+  updateParticipant: (t, eventId, id, data) =>
+    call<AdminState>('PATCH', `${ev(eventId)}/participants/${encodeURIComponent(id)}`, t, data),
+  removeParticipant: (t, eventId, id) =>
+    call<AdminState>('DELETE', `${ev(eventId)}/participants/${encodeURIComponent(id)}`, t),
+  runDraw: (t, eventId) => call<AdminState>('POST', `${ev(eventId)}/draw`, t),
+  resetDraw: (t, eventId) => call<AdminState>('DELETE', `${ev(eventId)}/draw`, t),
 }

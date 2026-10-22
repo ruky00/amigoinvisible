@@ -9,7 +9,9 @@ export interface Wish {
   url?: string
 }
 
+/** Un sorteo: "Papá Noel · Familia", "Camisetas raras · Equipo"… */
 export interface EventInfo {
+  id: string
   name: string
   /** Presupuesto orientativo, en texto libre: "20 €", "entre 15 y 25 €" */
   budget: string
@@ -43,6 +45,19 @@ export interface AdminParticipant {
   seenAt: string | null
 }
 
+/** Resumen de un sorteo para la lista "Mis sorteos" */
+export interface EventSummary extends EventInfo {
+  participantCount: number
+  /** Cuántos han escrito ya su lista */
+  wishlistCount: number
+  /** Cuántos han entrado a ver su amigo invisible */
+  seenCount: number
+}
+
+/** Datos editables de un sorteo */
+export type EventDraft = Pick<EventInfo, 'name' | 'budget' | 'date'>
+
+/** Todo lo que ve la organización de un sorteo concreto */
 export interface AdminState {
   event: EventInfo
   participants: AdminParticipant[]

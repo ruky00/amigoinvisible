@@ -45,7 +45,9 @@ npm run dev      # arranca el servidor de desarrollo en http://localhost:5173
 
 ## Cómo funciona
 
-- **Quien organiza** entra en `/organizar`, apunta a la familia, marca exclusiones (p. ej. parejas)
+- **Quien organiza** entra en `/organizar`, donde ve **todos sus sorteos** ("Papá Noel · Familia",
+  "Camisetas raras · Equipo"…) y puede crear, editar o borrar los que quiera. Cada sorteo tiene
+  su propia gente: dentro de cada uno apunta a los participantes, marca exclusiones (p. ej. parejas)
   y hace el sorteo. Cada persona tiene un código (`NIEVE-42`) y un enlace personal para mandar por WhatsApp.
   Nadie, ni la organización, ve el reparto completo.
 - **Cada participante** entra con su código, descubre a quién regala (etiqueta que se gira),
@@ -54,7 +56,7 @@ npm run dev      # arranca el servidor de desarrollo en http://localhost:5173
 ## Modo pruebas (sin backend)
 
 Mientras no haya backend, la app usa un simulador que guarda los datos en el navegador
-(`src/api/mock.ts`). Trae una familia de ejemplo. La contraseña de organización de pruebas
+(`src/api/mock.ts`). Trae dos sorteos de ejemplo. La contraseña de organización de pruebas
 es la constante `MOCK_ADMIN_PASSWORD` de ese archivo. Para conectar con la API real, mira
 `.env.example` y **[API.md](API.md)**, donde están descritos todos los endpoints.
 

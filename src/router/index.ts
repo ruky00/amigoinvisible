@@ -15,7 +15,13 @@ const router = createRouter({
       component: () => import('@/views/ParticipantView.vue'),
       meta: { needsParticipant: true },
     },
-    { path: '/organizar', name: 'admin', component: () => import('@/views/AdminView.vue') },
+    // Organización: lista de sorteos y el panel de cada uno
+    { path: '/organizar', name: 'admin', component: () => import('@/views/AdminEventsView.vue') },
+    {
+      path: '/organizar/:eventId',
+      name: 'admin-event',
+      component: () => import('@/views/AdminView.vue'),
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
