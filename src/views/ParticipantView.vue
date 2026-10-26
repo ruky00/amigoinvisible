@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { api, ApiError } from '@/api'
 import { useSessionStore } from '@/stores/session'
 import type { Assignment, EventInfo, Me, Wish } from '@/types'
-import GiftTag from '@/components/GiftTag.vue'
+import EnvelopeReveal from '@/components/EnvelopeReveal.vue'
 import WishList from '@/components/WishList.vue'
 import WishlistEditor from '@/components/WishlistEditor.vue'
 import KnitSock from '@/components/KnitSock.vue'
@@ -140,8 +140,8 @@ const guide = computed<Guide>(() => {
       steps,
       spot: 'giftee',
       title: 'Descubre a quién te toca regalar',
-      text: `Toca la etiqueta azul del recuadro «Tu amigo invisible» (${where('giftee')}). Se dará la vuelta y verás el nombre. Mejor sin nadie mirando.`,
-      action: 'Llévame a la etiqueta',
+      text: `Toca el sobre plateado del recuadro «Tu amigo invisible» (${where('giftee')}). Se abrirá y saldrá el nombre. Mejor sin nadie mirando.`,
+      action: 'Llévame al sobre',
     }
   }
 
@@ -185,7 +185,7 @@ async function goToSpot() {
   section.scrollIntoView({ behavior: 'smooth', block: 'start' })
   await nextTick()
   let target: HTMLElement | null = null
-  if (spot === 'giftee') target = section.querySelector<HTMLElement>('.tag')
+  if (spot === 'giftee') target = section.querySelector<HTMLElement>('.envelope')
   else if (editorDirty.value) target = section.querySelector<HTMLElement>('.actions .btn-primary')
   else
     target =
@@ -236,9 +236,9 @@ const prettyDate = computed(() => {
         <h2>Tu amigo invisible</h2>
 
         <template v-if="assignment">
-          <GiftTag :name="assignment.name" :revealed="revealed" @toggle="toggleReveal" />
+          <EnvelopeReveal :name="assignment.name" :revealed="revealed" @toggle="toggleReveal" />
           <p class="hint muted">
-            {{ revealed ? 'Vuelve a tocar la etiqueta para taparlo.' : 'Asegúrate de que no hay ningún cuñado mirando.' }}
+            {{ revealed ? 'Vuelve a tocar el sobre para cerrarlo.' : 'Toca el sobre para abrirlo. Antes, asegúrate de que no hay ningún cuñado mirando.' }}
           </p>
 
           <div v-if="revealed" class="their-list">
