@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { api, ApiError } from '@/api'
+import { api, ApiError, usingMock } from '@/api'
+import { demoLogins } from '@/api/mock'
 import { useSessionStore } from '@/stores/session'
 import RibbonBow from '@/components/RibbonBow.vue'
 
@@ -28,6 +29,22 @@ async function enter() {
   } finally {
     loading.value = false
   }
+}
+
+// Modo pruebas (sin backend): accesos de un toque con los participantes de ejemplo
+const demoGroups = computed(() => {
+  if (!usingMock) return []
+  const groups = new Map<string, { name: string; code: string }[]>()
+  for (const d of demoLogins()) {
+    if (!groups.has(d.event)) groups.set(d.event, [])
+    groups.get(d.event)!.push(d)
+  }
+  return [...groups.entries()].map(([event, people]) => ({ event, people }))
+})
+
+function enterAs(demoCode: string) {
+  code.value = demoCode
+  enter()
 }
 </script>
 
@@ -87,6 +104,29 @@ async function enter() {
         <RouterLink to="/organizar">Soy quien organiza</RouterLink>
       </p>
     </form>
+
+    <aside v-if="demoGroups.length" class="demo" aria-label="Accesos de prueba">
+      <p class="eyebrow">Modo pruebas · sin backend</p>
+      <p class="muted small">
+        Entra con un toque como cualquiera de los participantes de ejemplo. (Cuando haya backend
+        de verdad, esto desaparece solo.)
+      </p>
+      <div v-for="g in demoGroups" :key="g.event" class="demo-group">
+        <p class="demo-event">{{ g.event }}</p>
+        <div class="demo-people">
+          <button
+            v-for="p in g.people"
+            :key="p.code"
+            type="button"
+            class="chip"
+            :disabled="loading"
+            @click="enterAs(p.code)"
+          >
+            {{ p.name }} <span class="demo-code">{{ p.code }}</span>
+          </button>
+        </div>
+      </div>
+    </aside>
   </section>
 </template>
 
@@ -194,6 +234,59 @@ async function enter() {
   width: 100%;
   padding: 0.85rem;
   font-size: 1.02rem;
+}
+
+.demo {
+  grid-column: 1 / -1;
+  padding: 1.25rem 1.4rem;
+  border: 1.5px dashed var(--stitch);
+  border-radius: var(--radius);
+  background: rgba(214, 220, 231, 0.05);
+}
+
+.demo .eyebrow {
+  margin-bottom: 0.4rem;
+}
+
+.demo-group {
+  margin-top: 1rem;
+}
+
+.demo-event {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--white);
+  margin-bottom: 0.4rem;
+}
+
+.demo-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  font: inherit;
+  font-size: 0.95rem;
+  min-height: 2.6rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+}
+
+.chip:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.demo-code {
+  margin-left: 0.35rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
 }
 
 .admin-link {

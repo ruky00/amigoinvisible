@@ -1,8 +1,10 @@
+> Implementación de referencia: [`backend/`](backend/) (Spring Boot), ver [backend/README.md](backend/README.md).
+
 # API que espera el front
 
-Documento para el backend (Cloudflare Workers / Pages Functions + D1 o KV).
+Contrato entre el front y el backend (implementado en Spring Boot + PostgreSQL).
 El front ya está hecho contra esta API: está en [`src/api/http.ts`](src/api/http.ts), y los
-tipos en [`src/types.ts`](src/types.ts), que se pueden importar tal cual desde el Worker.
+tipos en [`src/types.ts`](src/types.ts) (en el backend, los DTO de `com.amigoinvisible.dto` los reflejan uno a uno).
 Mientras no exista el backend, el front usa un simulador ([`src/api/mock.ts`](src/api/mock.ts))
 que guarda los datos en el navegador.
 
@@ -97,27 +99,19 @@ Todas las rutas cuelgan de `/api/admin/events/:eventId` (abreviado `…/:eventId
 - `DELETE /api/admin/draw` anula el sorteo (borra las parejas y los `seenAt`), pero **no**
   las listas de deseos.
 
-## Modelo de datos sugerido (D1)
+## Modelo de datos
 
-```sql
-CREATE TABLE event (
-  id TEXT PRIMARY KEY, name TEXT NOT NULL, budget TEXT, date TEXT,
-  drawn_at TEXT, created_at TEXT NOT NULL
-);
-CREATE TABLE participant (
-  id TEXT PRIMARY KEY,
-  event_id TEXT NOT NULL REFERENCES event(id) ON DELETE CASCADE,
-  name TEXT NOT NULL, code TEXT UNIQUE NOT NULL, seen_at TEXT,
-  UNIQUE (event_id, name)
-);
-CREATE TABLE exclusion (participant_id TEXT, excluded_id TEXT, PRIMARY KEY (participant_id, excluded_id));
-CREATE TABLE wish (id TEXT PRIMARY KEY, participant_id TEXT NOT NULL, position INTEGER, text TEXT NOT NULL, url TEXT);
-CREATE TABLE pair (
-  event_id TEXT NOT NULL REFERENCES event(id) ON DELETE CASCADE,
-  giver_id TEXT PRIMARY KEY, receiver_id TEXT UNIQUE NOT NULL
-);
-CREATE TABLE session (token TEXT PRIMARY KEY, participant_id TEXT, is_admin INTEGER, created_at TEXT);
-```
+La versión real y actualizada es la migración de Flyway
+[`backend/src/main/resources/db/migration`](backend/src/main/resources/db/migration);
+aquí solo va el resumen:
+
+| Tabla                   | Qué guarda                                                                 |
+| ----------------------- | -------------------------------------------------------------------------- |
+| `draw_event`            | Cada sorteo: nombre, presupuesto, fecha de intercambio, cuándo se sorteó    |
+| `participant`           | Persona dentro de un sorteo; `code` único global; `receiver_id` = a quién regala (secreto) |
+| `participant_exclusion` | A quién no le puede tocar a cada participante                               |
+| `wish`                  | Lista de deseos (texto + enlace opcional), en orden                         |
+| `app_session`           | Tokens de sesión de participantes y de organización, con caducidad          |
 
 ## Rutas del front (para el despliegue)
 

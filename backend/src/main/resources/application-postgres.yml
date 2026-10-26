@@ -1,0 +1,10 @@
+# Perfil PostgreSQL. Los valores por defecto coinciden con docker-compose.yml.
+# En producción se sobreescriben con variables de entorno (DB_HOST, DB_PASSWORD…).
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:amigoinvisible}
+    username: ${DB_USER:amigo}
+    password: ${DB_PASSWORD:amigo}
+
+app:
+  demo-data: ${DEMO_DATA:false}

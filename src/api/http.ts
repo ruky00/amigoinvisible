@@ -1,6 +1,6 @@
-// Implementación real: habla con la API que Carlos monte en Cloudflare.
+// Implementación real: habla con el backend de Spring Boot (carpeta backend/).
 // Los endpoints están descritos en API.md. La URL base sale de VITE_API_URL
-// (vacía = mismo dominio, p. ej. Pages Functions en /api).
+// (vacía = mismo dominio; en desarrollo, el proxy de Vite manda /api a localhost:8080).
 
 import type { AdminState, Assignment, EventInfo, EventSummary, Me, Wish } from '@/types'
 import { ApiError, type Api } from './types'

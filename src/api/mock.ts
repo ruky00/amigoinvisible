@@ -84,24 +84,51 @@ function newEvent(name: string, budget: string, date: string): DbEvent {
   }
 }
 
+/** Crea un participante de ejemplo con un código fijo, para poder entrar sin buscarlo. */
+function demoParticipant(name: string, code: string): DbParticipant {
+  return { id: newId(), name, code, exclusions: [], wishlist: [], seenAt: null }
+}
+
+/**
+ * Datos de ejemplo. Los códigos son fijos (NIEVE-42 es el del ejemplo de la portada) y el
+ * sorteo de la familia ya está hecho, para poder ver el sobre nada más entrar.
+ */
 function seed(): Db {
   const db: Db = { events: [] }
 
   const family = newEvent('Papá Noel · Familia', '25 €', '2026-12-24')
-  db.events.push(family)
-  for (const name of ['Luna', 'Carlos', 'Abuela Carmen', 'Tío Paco', 'Marta'])
-    family.participants.push(newParticipant(name, allCodes(db)))
+  family.participants = [
+    demoParticipant('Luna', 'NIEVE-42'),
+    demoParticipant('Carlos', 'RENO-11'),
+    demoParticipant('Abuela Carmen', 'TURRON-23'),
+    demoParticipant('Tío Paco', 'ACEBO-35'),
+    demoParticipant('Marta', 'ESTRELLA-47'),
+  ]
   family.participants[3]!.wishlist = [
     { id: newId(), text: 'Un buen jamón (o medio, no soy exigente)' },
     { id: newId(), text: 'Bufanda de lana gris', url: 'https://example.com/bufanda' },
   ]
+  family.pairs = drawPairs(family.participants)
+  family.drawnAt = new Date().toISOString()
+  db.events.push(family)
 
   const team = newEvent('Camisetas raras · Equipo', '15 €', '2026-12-19')
+  team.participants = [
+    demoParticipant('Luna', 'TRINEO-58'),
+    demoParticipant('Dani', 'COMETA-62'),
+    demoParticipant('Irene', 'VELA-74'),
+    demoParticipant('Rober', 'BELEN-86'),
+  ]
   db.events.push(team)
-  for (const name of ['Luna', 'Dani', 'Irene', 'Rober'])
-    team.participants.push(newParticipant(name, allCodes(db)))
 
   return db
+}
+
+/** Para el modo pruebas: quién hay en cada sorteo y con qué código puede entrar. */
+export function demoLogins(): { event: string; name: string; code: string }[] {
+  return load().events.flatMap((e) =>
+    e.participants.map((p) => ({ event: e.name, name: p.name, code: p.code })),
+  )
 }
 
 function migrate(old: OldDb): Db {

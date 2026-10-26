@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Acceso a la zona de organización. Al entrar guarda el token en la sesión.
 import { ref } from 'vue'
-import { api, ApiError } from '@/api'
+import { api, ApiError, usingMock } from '@/api'
+import { MOCK_ADMIN_PASSWORD } from '@/api/mock'
 import { useSessionStore } from '@/stores/session'
 import HangingBauble from '@/components/HangingBauble.vue'
 import RibbonBow from '@/components/RibbonBow.vue'
@@ -41,6 +42,10 @@ async function login() {
         <input id="pw" v-model="password" type="password" autocomplete="current-password" />
       </div>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
+      <p v-if="usingMock" class="demo muted">
+        Modo pruebas: la contraseña es «{{ MOCK_ADMIN_PASSWORD }}».
+        <button type="button" class="btn-link" @click="password = MOCK_ADMIN_PASSWORD">Rellenarla</button>
+      </p>
       <button class="btn btn-primary" :disabled="busy || !password">Entrar</button>
     </form>
   </section>
@@ -64,5 +69,12 @@ async function login() {
 
 .login .btn {
   width: 100%;
+}
+
+.demo {
+  font-size: 0.92rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px dashed var(--stitch);
+  border-radius: 10px;
 }
 </style>
