@@ -1,0 +1,17 @@
+// TSConfig del Worker de Cloudflare (worker/). Los tipos del runtime se generan con
+// `npm run cf-typegen` (hay que repetirlo al tocar wrangler.jsonc).
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "lib": ["es2022"],
+    "types": [],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts", "../src/types.ts", "../src/lib/draw.ts"],
+  "exclude": ["test/**"]
+}

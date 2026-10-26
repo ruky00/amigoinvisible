@@ -7,7 +7,7 @@ Aplicación web para organizar el Amigo Invisible en familia:
 - **Sorteo aleatorio** de parejas (quién regala a quién).
 - **Lista de deseos** por cada participante.
 
-El front se alojará en **Cloudflare Pages**. El backend (Spring Boot + PostgreSQL) está en [`backend/`](backend/README.md).
+Todo se aloja gratis en **Cloudflare**: un único Worker sirve el front y la API, y los datos se guardan en D1.
 
 ## Stack
 
@@ -18,8 +18,10 @@ El front se alojará en **Cloudflare Pages**. El backend (Spring Boot + PostgreS
 | Enrutado       | Vue Router                                    |
 | Estado global  | Pinia                                         |
 | Calidad código | ESLint + Oxlint + Prettier                    |
-| Backend        | Spring Boot 4 + PostgreSQL (ver `backend/`)   |
-| Hosting        | Cloudflare (pendiente de configurar)          |
+| API            | Cloudflare Worker en TypeScript (`worker/`)   |
+| Base de datos  | Cloudflare D1 (SQLite)                        |
+| Tests de la API| Vitest + `@cloudflare/vitest-pool-workers`    |
+| Hosting        | Cloudflare Workers (plan gratuito)            |
 
 ## Requisitos
 
@@ -40,7 +42,13 @@ npm run dev      # arranca el servidor de desarrollo en http://localhost:5173
 | `npm run dev`        | Servidor de desarrollo con recarga en caliente                  |
 | `npm run build`      | Comprueba tipos y genera la versión de producción en `dist/`    |
 | `npm run preview`    | Sirve en local el contenido de `dist/` (probar el build)        |
-| `npm run type-check` | Solo comprobación de tipos TypeScript                           |
+| `npm run type-check` | Solo comprobación de tipos TypeScript (front y Worker)          |
+| `npm test`           | Tests de la API (Worker + D1 en local)                          |
+| `npm run cf:dev`     | Genera `dist/` y arranca la app completa en local (puerto 8787) |
+| `npm run db:migrate:local` | Crea/actualiza las tablas de la D1 local                  |
+| `npm run db:seed:local`    | Carga los sorteos de ejemplo en la D1 local (`NIEVE-42`)  |
+| `npm run db:migrate:remote`| Aplica las migraciones a la D1 de producción              |
+| `npm run cf-typegen` | Regenera los tipos del Worker tras tocar `wrangler.jsonc`       |
 | `npm run lint`       | Revisa y corrige el código con Oxlint y ESLint                  |
 | `npm run format`     | Formatea `src/` con Prettier                                    |
 
@@ -61,16 +69,21 @@ Mientras no haya backend, la app usa un simulador que guarda los datos en el nav
 es la constante `MOCK_ADMIN_PASSWORD` de ese archivo. Para conectar con la API real, mira
 `.env.example` y **[API.md](API.md)**, donde están descritos todos los endpoints.
 
-## Backend
+## API en local
 
-La API real está en [`backend/`](backend/) (Spring Boot + PostgreSQL/H2). Cómo arrancarla,
-probarla y desplegarla: **[backend/README.md](backend/README.md)**.
+La API es el Worker de [`worker/`](worker/) (contrato en **[API.md](API.md)**). La primera vez:
 
-Para desarrollar con el backend de verdad, dos terminales:
+```bash
+cp .dev.vars.example .dev.vars   # contraseña de organización en local (turron)
+npm run db:migrate:local         # crea las tablas en la D1 local (.wrangler/)
+npm run db:seed:local            # opcional: sorteos de ejemplo, entra con NIEVE-42
+```
 
-1. En `backend/`: `.\mvnw.cmd spring-boot:run` (Windows) o `./mvnw spring-boot:run` (macOS/Linux).
-2. En esta carpeta: crea `.env.local` con `VITE_USE_MOCK=false` y lanza `npm run dev`.
-   Vite reenvía `/api` a `http://localhost:8080`, así que `VITE_API_URL` se queda vacía.
+Después, dos terminales:
+
+1. `npm run cf:dev`: genera `dist/` y arranca el Worker en `http://localhost:8787` (ya es la app entera).
+2. Si quieres recarga en caliente del front: crea `.env.local` con `VITE_USE_MOCK=false` y lanza
+   `npm run dev`. Vite reenvía `/api` a `http://localhost:8787`, así que `VITE_API_URL` se queda vacía.
 
 ## Estructura
 
@@ -84,12 +97,34 @@ Para desarrollar con el backend de verdad, dos terminales:
 │   ├── router/          # Rutas: /, /entrar/:code, /mi-sorteo, /organizar
 │   ├── stores/          # session.ts (tokens de sesión)
 │   ├── views/           # Pantallas
-│   └── types.ts         # Tipos compartidos con el backend
-├── API.md               # Contrato con el backend
+│   └── types.ts         # Tipos compartidos con la API
+├── worker/
+│   ├── index.ts         # Entrada del Worker: /api/* a la API, el resto a los estáticos de dist/
+│   ├── api/             # Rutas (me.ts, admin.ts), sesiones (auth.ts), lecturas de D1 (dto.ts)
+│   ├── migrations/      # Esquema de D1 (wrangler d1 migrations)
+│   ├── seed/demo.sql    # Sorteos de ejemplo
+│   └── test/            # Tests de la API
+├── wrangler.jsonc       # Configuración de Cloudflare (Worker, D1, cron)
+├── API.md               # Contrato entre el front y la API
 └── index.html
 ```
 
-## Despliegue en Cloudflare (referencia)
+## Despliegue en Cloudflare (gratis)
 
-- Comando de build: `npm run build`
-- Directorio de salida: `dist`
+Un único Worker (`wrangler.jsonc`) sirve el front (`dist/`) y la API (`worker/`), con los datos en D1.
+Todo entra en el plan gratuito.
+
+La base de datos de producción ya existe (`amigoinvisible`, región Europa occidental; su
+`database_id` está en `wrangler.jsonc`) y tiene las tablas creadas. Lo único que falta una vez,
+desde tu ordenador (`npx wrangler login` primero):
+
+- Contraseña de organización: `npx wrangler secret put ADMIN_PASSWORD` (o en el panel del Worker:
+  Settings → Variables and Secrets). Sin ella nadie puede entrar en `/organizar`.
+
+En el panel del Worker (Settings → Build), conectado al repo:
+
+- **Build command:** `npm run build` (usa `.env.production`: API real en el mismo dominio)
+- **Deploy command:** `npx wrangler deploy`
+
+Cada push a `main` despliega. Si algún día se añade una migración nueva en `worker/migrations/`,
+hay que volver a lanzar `npm run db:migrate:remote`.

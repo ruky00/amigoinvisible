@@ -3,7 +3,7 @@ import type { AdminState, Assignment, EventDraft, EventInfo, EventSummary, Me, W
 /**
  * Todo lo que el front necesita del backend.
  * Hay dos implementaciones: `mock.ts` (guarda en localStorage, para desarrollar sin backend)
- * y `http.ts` (llama a la API real, el backend de Spring Boot). Se elige en `api/index.ts`.
+ * y `http.ts` (llama a la API real, el Worker de `worker/`). Se elige en `api/index.ts`.
  *
  * Puede haber varios sorteos a la vez, cada uno con sus propios participantes.
  * El código de un participante identifica a la persona Y a su sorteo, así que quien

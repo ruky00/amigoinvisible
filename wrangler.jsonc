@@ -1,0 +1,31 @@
+// Despliegue en Cloudflare (plan gratuito): un único Worker que
+//   - sirve el front (Vite -> ./dist) como estáticos, con fallback SPA para vue-router
+//   - responde /api/* con la API (worker/), que guarda los datos en D1 (SQLite de Cloudflare)
+// Front y API van en el mismo dominio: no hace falta CORS ni VITE_API_URL.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "amigoinvisible",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-06-01",
+  "observability": { "enabled": true },
+
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    // solo la API pasa por el código del Worker; el resto se sirve directamente
+    "run_worker_first": ["/api/*"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "amigoinvisible",
+      "database_id": "1eba7595-bc2c-45c4-82a8-9cc5dafa653c",
+      "migrations_dir": "worker/migrations"
+    }
+  ],
+
+  // limpieza diaria de sesiones caducadas e intentos de login viejos
+  "triggers": { "crons": ["30 4 * * *"] }
+}

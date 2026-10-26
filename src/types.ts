@@ -1,5 +1,5 @@
 // Tipos compartidos entre el front y la API.
-// Si el backend (Cloudflare Workers) se escribe en TypeScript, puede importar este mismo archivo.
+// El backend (worker/, Cloudflare Workers) importa este mismo archivo.
 
 export interface Wish {
   id: string

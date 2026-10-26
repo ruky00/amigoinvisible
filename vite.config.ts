@@ -16,10 +16,10 @@ export default defineConfig({
     },
   },
   server: {
-    // En `npm run dev`, las llamadas a /api van al backend Spring Boot (backend/README.md).
+    // En `npm run dev`, las llamadas a /api van al Worker local (`npx wrangler dev`, puerto 8787).
     // Así VITE_API_URL puede quedarse vacía y no hay problemas de CORS.
     proxy: {
-      '/api': 'http://localhost:8080',
+      '/api': 'http://localhost:8787',
     },
   },
 })

@@ -1,12 +1,12 @@
-> Implementación de referencia: [`backend/`](backend/) (Spring Boot), ver [backend/README.md](backend/README.md).
+> Implementación: el Worker de Cloudflare de [`worker/`](worker/) (TypeScript + D1), ver [README.md](README.md).
 
 # API que espera el front
 
-Contrato entre el front y el backend (implementado en Spring Boot + PostgreSQL).
+Contrato entre el front y la API (Cloudflare Worker + D1).
 El front ya está hecho contra esta API: está en [`src/api/http.ts`](src/api/http.ts), y los
-tipos en [`src/types.ts`](src/types.ts) (en el backend, los DTO de `com.amigoinvisible.dto` los reflejan uno a uno).
-Mientras no exista el backend, el front usa un simulador ([`src/api/mock.ts`](src/api/mock.ts))
-que guarda los datos en el navegador.
+tipos en [`src/types.ts`](src/types.ts), que el Worker importa tal cual.
+En modo pruebas (`VITE_USE_MOCK`, ver `.env.example`) el front usa un simulador
+([`src/api/mock.ts`](src/api/mock.ts)) que guarda los datos en el navegador.
 
 ## Generalidades
 
@@ -38,7 +38,7 @@ El front solo pide "lo mío", pero **quien garantiza la privacidad es el backend
    `GET /api/admin/events/:eventId` no lo devuelve.
 3. Un token de participante solo da acceso a su propio sorteo.
 4. El sorteo se hace en el servidor (el algoritmo está en [`src/lib/draw.ts`](src/lib/draw.ts),
-   sin dependencias, listo para copiar).
+   sin dependencias; lo usan el Worker y el simulador).
 5. La contraseña de organización vive como secreto del Worker (`wrangler secret put ADMIN_PASSWORD`),
    nunca en el código del front.
 
@@ -101,9 +101,8 @@ Todas las rutas cuelgan de `/api/admin/events/:eventId` (abreviado `…/:eventId
 
 ## Modelo de datos
 
-La versión real y actualizada es la migración de Flyway
-[`backend/src/main/resources/db/migration`](backend/src/main/resources/db/migration);
-aquí solo va el resumen:
+La versión real y actualizada son las migraciones de D1 de
+[`worker/migrations`](worker/migrations); aquí solo va el resumen:
 
 | Tabla                   | Qué guarda                                                                 |
 | ----------------------- | -------------------------------------------------------------------------- |
@@ -112,11 +111,11 @@ aquí solo va el resumen:
 | `participant_exclusion` | A quién no le puede tocar a cada participante                               |
 | `wish`                  | Lista de deseos (texto + enlace opcional), en orden                         |
 | `app_session`           | Tokens de sesión de participantes y de organización, con caducidad          |
+| `login_failure`         | Intentos de login fallidos por IP (máximo 10 en 10 minutos, luego `429`)    |
 
 ## Rutas del front (para el despliegue)
 
 Es una SPA con rutas `/`, `/entrar/:code`, `/mi-sorteo`, `/organizar` (lista de sorteos) y
 `/organizar/:eventId` (un sorteo). Hay que servir
-`index.html` para cualquier ruta que no sea un archivo: en Cloudflare Pages funciona solo
-(si no hay `404.html`); con Workers + static assets, poner
-`not_found_handling = "single-page-application"` en `wrangler.toml`.
+`index.html` para cualquier ruta que no sea un archivo: ya está en `wrangler.jsonc`
+(`not_found_handling: "single-page-application"`).

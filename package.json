@@ -8,11 +8,17 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build",
+    "type-check": "vue-tsc --build && tsc -p worker/tsconfig.json",
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/"
+    "format": "prettier --write --experimental-cli src/",
+    "test": "vitest run",
+    "cf:dev": "npm run build-only && wrangler dev",
+    "cf-typegen": "wrangler types worker/worker-configuration.d.ts",
+    "db:migrate:local": "wrangler d1 migrations apply amigoinvisible --local",
+    "db:migrate:remote": "wrangler d1 migrations apply amigoinvisible --remote",
+    "db:seed:local": "wrangler d1 execute amigoinvisible --local --file worker/seed/demo.sql"
   },
   "dependencies": {
     "pinia": "^4.0.3",
@@ -20,6 +26,7 @@
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.4.8",
     "@tsconfig/node24": "^24.0.5",
     "@types/node": "^24.13.4",
     "@vitejs/plugin-vue": "^6.0.8",
@@ -36,8 +43,10 @@
     "typescript": "~6.0.0",
     "vite": "^8.2.2",
     "vite-plugin-vue-devtools": "^8.2.1",
+    "vitest": "^4.1.12",
     "vue-eslint-parser": "^10.4.1",
-    "vue-tsc": "^3.3.11"
+    "vue-tsc": "^3.3.11",
+    "wrangler": "^4.152.0"
   },
   "engines": {
     "node": "^22.18.0 || >=24.12.0"
