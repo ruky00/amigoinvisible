@@ -1,0 +1,49 @@
+# Base de datos (y opcionalmente la API) para desarrollo y pruebas.
+#
+#   docker compose up -d                          -> solo PostgreSQL
+#   docker compose --profile app up -d --build    -> PostgreSQL + API (imagen del Dockerfile)
+#   docker compose --profile app down             -> lo para todo (los datos se quedan en el volumen)
+#
+# Los valores se pueden cambiar en un fichero .env junto a este (copia .env.example).
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-amigoinvisible}
+      POSTGRES_USER: ${DB_USER:-amigo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-amigo}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    profiles: ["app"]
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-amigoinvisible}
+      DB_USER: ${DB_USER:-amigo}
+      DB_PASSWORD: ${DB_PASSWORD:-amigo}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-turron}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      DEMO_DATA: ${DEMO_DATA:-false}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

@@ -7,7 +7,7 @@ Aplicación web para organizar el Amigo Invisible en familia:
 - **Sorteo aleatorio** de parejas (quién regala a quién).
 - **Lista de deseos** por cada participante.
 
-Se alojará en **Cloudflare** (front y base de datos).
+El front se alojará en **Cloudflare Pages**. El backend (Spring Boot + PostgreSQL) está en [`backend/`](backend/README.md).
 
 ## Stack
 
@@ -18,6 +18,7 @@ Se alojará en **Cloudflare** (front y base de datos).
 | Enrutado       | Vue Router                                    |
 | Estado global  | Pinia                                         |
 | Calidad código | ESLint + Oxlint + Prettier                    |
+| Backend        | Spring Boot 4 + PostgreSQL (ver `backend/`)   |
 | Hosting        | Cloudflare (pendiente de configurar)          |
 
 ## Requisitos
@@ -59,6 +60,17 @@ Mientras no haya backend, la app usa un simulador que guarda los datos en el nav
 (`src/api/mock.ts`). Trae dos sorteos de ejemplo. La contraseña de organización de pruebas
 es la constante `MOCK_ADMIN_PASSWORD` de ese archivo. Para conectar con la API real, mira
 `.env.example` y **[API.md](API.md)**, donde están descritos todos los endpoints.
+
+## Backend
+
+La API real está en [`backend/`](backend/) (Spring Boot + PostgreSQL/H2). Cómo arrancarla,
+probarla y desplegarla: **[backend/README.md](backend/README.md)**.
+
+Para desarrollar con el backend de verdad, dos terminales:
+
+1. En `backend/`: `.\mvnw.cmd spring-boot:run` (Windows) o `./mvnw spring-boot:run` (macOS/Linux).
+2. En esta carpeta: crea `.env.local` con `VITE_USE_MOCK=false` y lanza `npm run dev`.
+   Vite reenvía `/api` a `http://localhost:8080`, así que `VITE_API_URL` se queda vacía.
 
 ## Estructura
 
