@@ -43,18 +43,38 @@ npm run dev      # arranca el servidor de desarrollo en http://localhost:5173
 | `npm run lint`       | Revisa y corrige el código con Oxlint y ESLint                  |
 | `npm run format`     | Formatea `src/` con Prettier                                    |
 
+## Cómo funciona
+
+- **Quien organiza** entra en `/organizar`, donde ve **todos sus sorteos** ("Papá Noel · Familia",
+  "Camisetas raras · Equipo"…) y puede crear, editar o borrar los que quiera. Cada sorteo tiene
+  su propia gente: dentro de cada uno apunta a los participantes, marca exclusiones (p. ej. parejas)
+  y hace el sorteo. Cada persona tiene un código (`NIEVE-42`) y un enlace personal para mandar por WhatsApp.
+  Nadie, ni la organización, ve el reparto completo.
+- **Cada participante** entra con su código, descubre a quién regala (etiqueta que se gira),
+  ve la lista de deseos de esa persona y escribe la suya (texto + enlace opcional).
+
+## Modo pruebas (sin backend)
+
+Mientras no haya backend, la app usa un simulador que guarda los datos en el navegador
+(`src/api/mock.ts`). Trae dos sorteos de ejemplo. La contraseña de organización de pruebas
+es la constante `MOCK_ADMIN_PASSWORD` de ese archivo. Para conectar con la API real, mira
+`.env.example` y **[API.md](API.md)**, donde están descritos todos los endpoints.
+
 ## Estructura
 
 ```
-├── public/            # Archivos estáticos servidos tal cual (favicon…)
+├── public/              # Archivos estáticos (favicon)
 ├── src/
-│   ├── App.vue        # Componente raíz
-│   ├── main.ts        # Punto de entrada (monta Vue, Pinia y Router)
-│   ├── router/        # Definición de rutas
-│   └── stores/        # Stores de Pinia
-├── index.html         # HTML base de la SPA
-├── vite.config.ts     # Configuración de Vite (alias @ → src)
-└── tsconfig*.json     # Configuración de TypeScript
+│   ├── api/             # Acceso a datos: mock.ts (pruebas), http.ts (API real), index.ts (elige)
+│   ├── assets/main.css  # Estilos globales: colores, tipografías, botones, formularios
+│   ├── components/      # GiftTag, WishList, WishlistEditor, HollySprig
+│   ├── lib/             # draw.ts (algoritmo del sorteo), url.ts
+│   ├── router/          # Rutas: /, /entrar/:code, /mi-sorteo, /organizar
+│   ├── stores/          # session.ts (tokens de sesión)
+│   ├── views/           # Pantallas
+│   └── types.ts         # Tipos compartidos con el backend
+├── API.md               # Contrato con el backend
+└── index.html
 ```
 
 ## Despliegue en Cloudflare (referencia)

@@ -1,0 +1,341 @@
+/* ------------------------------------------------------------------
+   Estilo general: noche de invierno azul marino, destellos plateados,
+   cajas cosidas a mano con pespuntes y cintas de raso.
+   ------------------------------------------------------------------ */
+
+:root {
+  --night: #091330;
+  --night-2: #0f1f47;
+  --night-3: #16295a;
+  --panel: rgba(17, 33, 74, 0.78);
+  --panel-solid: #12234d;
+  --hover: rgba(226, 232, 244, 0.07);
+
+  --text: #e8edf6;
+  --text-soft: #c2cbdc;
+  --white: #ffffff;
+  --silver: #d6dce7;
+  --silver-deep: #b3bdd0;
+  --ice: #bcd0f2;
+
+  --line: rgba(214, 220, 231, 0.18);
+  --line-strong: rgba(214, 220, 231, 0.38);
+  --stitch: rgba(226, 232, 242, 0.5);
+
+  --ok: #a9dcc3;
+  --danger: #ffb3a6;
+
+  /* raso plateado para botones y cintas */
+  --satin: linear-gradient(160deg, #ffffff 0%, #dfe4ec 28%, #aeb8c9 52%, #e8ecf2 72%, #b9c2d2 100%);
+  --silver-text: linear-gradient(180deg, #ffffff 0%, #e4e9f1 45%, #aab5c8 100%);
+
+  --font-display: 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-body: 'Jost', 'Segoe UI', system-ui, sans-serif;
+
+  --radius: 14px;
+  --shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.7), 0 2px 0 rgba(255, 255, 255, 0.03) inset;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Tamaño de letra base generoso (18px). Con "Letra grande" sube a 21px y todo crece en proporción. */
+html {
+  -webkit-text-size-adjust: 100%;
+  font-size: 112.5%;
+}
+
+html.big-text {
+  font-size: 131.25%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--night);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(70, 104, 178, 0.35), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 95% 20%, rgba(120, 140, 190, 0.18), transparent 70%),
+    radial-gradient(ellipse 90% 60% at 50% 110%, rgba(40, 70, 140, 0.45), transparent 70%),
+    linear-gradient(180deg, var(--night-2) 0%, var(--night) 55%, #070f26 100%);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--white);
+}
+
+h1 {
+  font-size: clamp(2.3rem, 7vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+h2 {
+  font-size: 1.8rem;
+  font-weight: 500;
+}
+
+h3 {
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+/* Texto con brillo plateado */
+.silver {
+  background: var(--silver-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+h1 em,
+h2 em {
+  font-style: italic;
+  font-weight: 500;
+}
+
+p {
+  margin: 0;
+}
+
+b,
+strong {
+  font-weight: 500;
+  color: var(--white);
+}
+
+a {
+  color: var(--ice);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+::selection {
+  background: rgba(188, 208, 242, 0.35);
+}
+
+:focus-visible {
+  outline: 3px solid var(--white);
+  outline-offset: 3px;
+}
+
+/* ---------- Cajas cosidas ---------- */
+
+.card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.9rem 1.75rem;
+  backdrop-filter: blur(6px);
+}
+
+/* pespunte: costura discontinua a unos milímetros del borde */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1.5px dashed var(--stitch);
+  border-radius: calc(var(--radius) - 6px);
+  pointer-events: none;
+}
+
+.card > * {
+  position: relative;
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--silver-deep);
+}
+
+.muted {
+  color: var(--text-soft);
+}
+
+/* Cursiva elegante pero fácil de leer, para los momentos especiales */
+.fancy {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.stack > * + * {
+  margin-top: var(--gap, 1rem);
+}
+
+/* ---------- Formularios ---------- */
+
+label {
+  display: block;
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+
+input,
+textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 1.05rem;
+  color: var(--white);
+  background: rgba(6, 14, 36, 0.5);
+  border: 1.5px solid rgba(214, 220, 231, 0.55);
+  border-radius: 10px;
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #95a2bc;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--silver);
+  box-shadow: 0 0 0 4px rgba(214, 220, 231, 0.2);
+}
+
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font: inherit;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  min-height: 3rem;
+  padding: 0.65rem 1.5rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    filter 0.2s,
+    background-color 0.2s,
+    transform 0.1s,
+    box-shadow 0.2s;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Botón principal: raso plateado */
+.btn-primary {
+  background: var(--satin);
+  color: var(--night);
+  font-weight: 600;
+  box-shadow:
+    0 8px 22px -10px rgba(214, 220, 231, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.07);
+  box-shadow:
+    0 10px 28px -10px rgba(214, 220, 231, 0.75),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.btn-secondary {
+  background: rgba(214, 220, 231, 0.1);
+  color: var(--white);
+  border-color: rgba(214, 220, 231, 0.55);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(214, 220, 231, 0.18);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--white);
+  border-color: rgba(214, 220, 231, 0.55);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--white);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0.35rem 0;
+  color: var(--text);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.btn-link:hover {
+  color: var(--white);
+}
+
+.btn-sm {
+  min-height: 2.6rem;
+  padding: 0.4rem 1rem;
+  font-size: 0.95rem;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Costura horizontal, como separador */
+.seam {
+  border: 0;
+  border-top: 1.5px dashed var(--stitch);
+  margin: 1.75rem 0;
+}
+
+@media (max-width: 760px) {
+  .card {
+    padding: 1.6rem 1.15rem;
+  }
+}
