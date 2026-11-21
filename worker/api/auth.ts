@@ -6,6 +6,9 @@ import { ApiError } from './http'
 /** Cuánto dura una sesión: los participantes vuelven durante semanas a mirar la lista. */
 const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000
 
+/** La de organización es corta: el front ni siquiera la guarda y pide la contraseña cada vez. */
+const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000
+
 /** Intentos fallidos de login permitidos por IP dentro de la ventana. */
 const MAX_LOGIN_FAILURES = 10
 const LOGIN_WINDOW_MS = 10 * 60 * 1000
@@ -33,7 +36,7 @@ async function openSession(
   admin: boolean,
 ): Promise<string> {
   const token = newToken()
-  const expires = new Date(ctx.now.getTime() + SESSION_TTL_MS)
+  const expires = new Date(ctx.now.getTime() + (admin ? ADMIN_SESSION_TTL_MS : SESSION_TTL_MS))
   await ctx.env.DB.prepare(
     'INSERT INTO app_session (token, participant_id, admin, created_at, expires_at) VALUES (?, ?, ?, ?, ?)',
   )

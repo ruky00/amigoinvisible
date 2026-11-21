@@ -16,11 +16,17 @@ const router = createRouter({
       meta: { needsParticipant: true },
     },
     // Organización: lista de sorteos y el panel de cada uno
-    { path: '/organizar', name: 'admin', component: () => import('@/views/AdminEventsView.vue') },
+    {
+      path: '/organizar',
+      name: 'admin',
+      component: () => import('@/views/AdminEventsView.vue'),
+      meta: { adminZone: true },
+    },
     {
       path: '/organizar/:eventId',
       name: 'admin-event',
       component: () => import('@/views/AdminView.vue'),
+      meta: { adminZone: true },
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
@@ -28,6 +34,8 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const session = useSessionStore()
+  // Al salir de la zona de organización se olvida su sesión: para volver hay que poner la contraseña
+  if (!to.meta.adminZone) session.adminToken = null
   if (to.meta.needsParticipant && !session.participantToken) return { name: 'home' }
   if (to.name === 'home' && session.participantToken) return { name: 'participant' }
 })
